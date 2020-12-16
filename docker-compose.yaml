@@ -14,6 +14,8 @@ services:
     networks:
       - app-network
       - rabbitmq_micro-catalog
+    depends_on:
+      - elasticsearch
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
@@ -29,10 +31,13 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.5.1
+    container_name: micro-catalog-kibana
     ports:
       - 5601:5601
     networks:
       - app-network
+    depends_on:
+      - elasticsearch
 
 networks:
   app-network:
