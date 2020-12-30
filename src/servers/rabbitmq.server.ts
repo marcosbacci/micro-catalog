@@ -1,18 +1,22 @@
 import { Binding, Context, inject } from "@loopback/context";
 import { MetadataInspector } from "@loopback/metadata";
 import { Application, CoreBindings, Server } from "@loopback/core"
-import { repository } from "@loopback/repository";
 import { AmqpConnectionManager, AmqpConnectionManagerOptions, ChannelWrapper, connect } from "amqp-connection-manager";
-import { ConfirmChannel, Options } from 'amqplib';
+import { Channel, ConfirmChannel, Message, Options } from 'amqplib';
 import { RabbitmqBindings } from "../keys";
-import { Category } from "../models";
-import { CategoryRepository } from "../repositories";
 import { RabbitmqSubcribeMetadata, RABBITMQ_SUBSCRIBE_DECORATOR } from "../decorators";
+
+export enum ResponseEnum {
+  ACK,
+  REQUEUE,
+  NACK
+}
 
 export interface RabbitmqConfig {
   uri: string;
   connOptions: AmqpConnectionManagerOptions;
-  exchanges?: { name: string, type: string, options?: Options.AssertExchange}[]
+  exchanges?: { name: string, type: string, options?: Options.AssertExchange}[];
+  defaultHandlerError?: ResponseEnum;
 }
 
 export class RabbitmqServer extends Context implements Server {
@@ -23,7 +27,6 @@ export class RabbitmqServer extends Context implements Server {
 
   constructor(
     @inject(CoreBindings.APPLICATION_INSTANCE) private app: Application,
-    @repository(CategoryRepository) private categoryRepo: CategoryRepository,
     @inject(RabbitmqBindings.CONFIG) private config: RabbitmqConfig
   ) {
     super(app);
@@ -132,11 +135,15 @@ export class RabbitmqServer extends Context implements Server {
             data = null;
           }
 
-          await method({data, message, channel});
-          channel.ack(message);
+          const responseType = await method({data, message, channel});
+          this.dispatchResponse(channel, message, responseType);
         }
       } catch (e) {
         console.error(e);
+        if (!message) {
+          return;
+        }
+        this.dispatchResponse(channel, message, this.config?.defaultHandlerError);
       }
     });
   }
@@ -183,6 +190,21 @@ export class RabbitmqServer extends Context implements Server {
   //     }
   //   }
   // }
+
+  private dispatchResponse(channel: Channel, message: Message, responseType?: ResponseEnum) {
+    switch (responseType) {
+      case ResponseEnum.REQUEUE:
+        channel.nack(message, false, true);
+        break;
+      case ResponseEnum.NACK:
+        channel.nack(message, false, false);
+        break;
+      case ResponseEnum.ACK:
+      default:
+        channel.ack(message);
+        break;
+    }
+  }
 
   async stop(): Promise<void> {
     await this._conn.close();
