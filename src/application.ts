@@ -7,7 +7,7 @@ import path from 'path';
 import {MySequence} from './sequence';
 import { RabbitmqServer } from './servers';
 import { RestComponent, RestServer } from '@loopback/rest';
-import { RestExplorerComponent, ValidatorsComponent } from './components';
+import { EntityComponent, RestExplorerComponent, ValidatorsComponent } from './components';
 
 export class MicroCatalogApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(Application)),
@@ -26,6 +26,7 @@ export class MicroCatalogApplication extends BootMixin(
     });
     this.component(RestExplorerComponent);
     this.component(ValidatorsComponent);
+    this.component(EntityComponent);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
@@ -41,32 +42,38 @@ export class MicroCatalogApplication extends BootMixin(
     this.servers([RabbitmqServer])
   }
 
-  // async boot() {
-  //   await super.boot();
+  async boot() {
+    await super.boot();
 
-  //   const validator = this.getSync<ValidatorService>('services.ValidatorService');
-  //   try {
-  //     await validator.validate(
-  //       {
-  //         data: {
-  //           id: '1-cast'
-  //         },
-  //         entityClass: Category
-  //       }
-  //     )
-  //   } catch (error) {
-  //     console.dir(error, {depth: 8});
-  //   }
+    // const categoryRepo = this.getSync('repositories.CategoryRepository');
+    // // @ts-ignore
+    // const category = await categoryRepo.find({where: {id: '3-cast'}});
+    // // @ts-ignore
+    // categoryRepo.updateById(category[0].id, {...category[0], name: "Infantil"});
 
-  //   // try {
-  //   //   await validator.validate(
-  //   //     {
-  //   //       data: {},
-  //   //       entityClass: Genre
-  //   //     }
-  //   //   )
-  //   // } catch (error) {
-  //   //   console.dir(error, {depth: 8});
-  //   // }
-  // }
+    // const validator = this.getSync<ValidatorService>('services.ValidatorService');
+    // try {
+    //   await validator.validate(
+    //     {
+    //       data: {
+    //         id: '1-cast'
+    //       },
+    //       entityClass: Category
+    //     }
+    //   )
+    // } catch (error) {
+    //   console.dir(error, {depth: 8});
+    // }
+
+    // try {
+    //   await validator.validate(
+    //     {
+    //       data: {},
+    //       entityClass: Genre
+    //     }
+    //   )
+    // } catch (error) {
+    //   console.dir(error, {depth: 8});
+    // }
+  }
 }

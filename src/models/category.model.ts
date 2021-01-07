@@ -1,5 +1,11 @@
 import {Entity, model, property} from '@loopback/repository';
 
+export interface SmallCategory {
+  id: string;
+  name: string;
+  is_actice: boolean;
+}
+
 //@model({settings: {strict: false}})
 @model()
 export class Category extends Entity {
