@@ -20,17 +20,23 @@ export class GenreSyncService extends BaseModelSyncService {
   @rabbitmqSubcribe({
     exchange: 'amq.topic',
     queue: 'micro-catalog/sync-videos/genre',
-    routingKey: 'model.genre.*'
+    routingKey: 'model.genre.*',
+    queueOptions: {
+      deadLetterExchange: 'dlx.amq.topic'
+    }
   })
   async handler({data, message}: {data: any, message: Message}) {
     await this.sync({ repo: this.repo, data, message });
-    return ResponseEnum.ACK;
+    //return ResponseEnum.ACK;
   }
 
   @rabbitmqSubcribe({
     exchange: 'amq.topic',
     queue: 'micro-catalog/sync-videos/genre_categories',
-    routingKey: 'model.genre_categories.*'
+    routingKey: 'model.genre_categories.*',
+    queueOptions: {
+      deadLetterExchange: 'dlx.amq.topic'
+    }
   })
   async handlerCategories({data, message}: {data: any, message: Message}) {
     await this.syncRelation({
@@ -41,6 +47,6 @@ export class GenreSyncService extends BaseModelSyncService {
       relationRepo: this.categoryRepo,
       message
     });
-    return ResponseEnum.ACK;
+    //return ResponseEnum.ACK;
   }
 }
